@@ -81,7 +81,7 @@
     <button id="btnPix">Gerar PIX</button>
     <button class="sec" id="btnVoltar">Voltar</button>
     <div class="msg" id="msg2"></div>
-    <p class="aviso">Após pagamento não é necessário enviar o comprovante!<br><span id="avisoModo">Sua renovação será liberada em instantes.</span></p>
+    <p class="aviso">Após pagamento não é necessário enviar o comprovante!<br><span id="avisoModo">Renovação das 08:00 às 22:00.</span></p>
   </div>
 
   <!-- 3. PIX -->
@@ -162,7 +162,7 @@ $("btnConsultar").onclick = async () => {
     $("lTelasEsc").classList.toggle("hide", !manual || info.valor_fixo != null);
     if (!manual) { $("cVenc").textContent = data(info.vencimento); $("cTelas").textContent = info.telas; }
     $("meses").value = "1";
-    $("avisoModo").textContent = manual ? "Sua renovação será liberada em instantes." : "Renovação Automática.";
+    $("avisoModo").textContent = manual ? "Renovação das 08:00 às 22:00." : "Renovação Automática.";
     atualizarTotal();
     mostrar(2);
   } catch (e) { $("msg1").textContent = e.message; }
@@ -201,7 +201,7 @@ async function conferir() {
     clearInterval(timer);
     const fim = {
       renovado: ["✅", "Renovação concluída!", "Seu acesso já está liberado até " + data(r.novo_vencimento) + ". Bom proveito!"],
-      pago_manual: ["✅", "Pagamento confirmado!", "Sua renovação será liberada em instantes. Se precisar, chame no WhatsApp."],
+      pago_manual: ["✅", "Pagamento confirmado!", "Sua renovação será liberada em instantes (das 08:00 às 22:00). Não precisa enviar comprovante."],
       erro: ["⚠️", "Pagamento recebido", "Recebemos seu PIX, mas a renovação precisa de uma conferência. Chame no WhatsApp que resolvemos rapidinho."],
       expirado: ["⏰", "PIX expirado", "O código venceu antes do pagamento. Faça uma nova renovação."],
     }[r.status];
