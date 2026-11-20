@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<title>RICO Streaming+ · Divulgação</title>
+<style>
+body{margin:0;background:#0E1320;color:#F2F4F8;font:16px system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:12px;padding:16px}
+canvas{width:340px;height:auto;border-radius:8px}
+button{padding:14px 28px;border:0;border-radius:10px;background:#F5B301;color:#0E1320;font-weight:700;font-size:18px;cursor:pointer}
+#st{min-height:1.2em;color:#9AA3B5}
+</style>
+</head>
+<body>
+<canvas id="c" width="1024" height="1536"></canvas>
+<button id="copiar">Copiar imagem</button>
+<div id="st"></div>
+<script>
+const c = document.getElementById("c"), ctx = c.getContext("2d");
+const img = new Image();
+let pronto = false;
+function desenhar(usuario) {
+  ctx.drawImage(img, 0, 0, 1024, 1536);
+  const t = "@" + usuario;
+  let size = 52;
+  do { ctx.font = "bold " + size + "px Arial, Helvetica, sans-serif"; if (ctx.measureText(t).width <= 500) break; size -= 2; } while (size > 30);
+  ctx.textBaseline = "alphabetic";
+  ctx.lineJoin = "round";
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = "#280A0A";
+  ctx.fillStyle = "#FFFF80";
+  ctx.strokeText(t, 330, 1500);
+  ctx.fillText(t, 330, 1500);
+  pronto = true;
+}
+window.desenhar = desenhar;
+img.onload = () => desenhar(new URLSearchParams(location.search).get("u") || "usuario");
+img.src = "base-divulgacao.jpg";
+document.getElementById("copiar").onclick = () => {
+  if (!pronto) return;
+  c.toBlob(async (b) => {
+    try {
+      await navigator.clipboard.write([new ClipboardItem({ "image/png": b })]);
+      document.getElementById("st").textContent = "Copiada!";
+    } catch (e) {
+      document.getElementById("st").textContent = "Erro ao copiar: " + e.message;
+    }
+  }, "image/png");
+};
+</script>
+</body>
+</html>
