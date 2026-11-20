@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RICO Streaming+ · Renovação</title>
+<link rel="icon" href="logo.png">
+<style>
+  :root{--bg:#0E1320;--card:#182033;--line:#24304A;--txt:#F2F4F8;--mut:#9AA3B5;--acc:#F5B301;--acc2:#D99E00;--err:#FF5A5A;--ok:#2BD94F}
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:linear-gradient(135deg,#1B2746 0%,#0E1320 50%,#080B14 100%) fixed;color:var(--txt);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px}
+  .box{width:100%;max-width:420px}
+  .logo{text-align:center;margin-bottom:20px}
+  .logo img{width:220px;max-width:70%;height:auto;display:block;margin:0 auto 6px}
+  .logo small{display:block;color:var(--mut)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+  h2{margin:0 0 14px;font-size:19px}
+  label{display:block;color:var(--mut);font-size:14px;margin-bottom:6px}
+  input,select{width:100%;padding:13px 14px;border-radius:10px;border:1px solid var(--line);background:#0e1218;color:var(--txt);font-size:16px}
+  input:focus,select:focus{outline:2px solid var(--acc);border-color:transparent}
+  button{width:100%;margin-top:16px;padding:14px;border:0;border-radius:10px;background:var(--acc);color:#0E1320;font-weight:700;font-size:16px;cursor:pointer}
+  button:hover{background:var(--acc2)}
+  button:disabled{opacity:.6;cursor:wait}
+  button.sec{background:transparent;color:var(--mut);border:1px solid var(--line);font-weight:500}
+  .linha{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line)}
+  .linha span{color:var(--mut)}
+  .total{font-size:22px;font-weight:700}
+  .qr{display:block;margin:6px auto 14px;width:220px;height:220px;background:#fff;border-radius:12px;padding:8px}
+  textarea{width:100%;height:84px;resize:none;padding:10px;border-radius:10px;border:1px solid var(--line);background:#0e1218;color:var(--mut);font-size:12px}
+  .msg{margin-top:12px;font-size:14px;color:var(--err);min-height:1em}
+  .espera{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;margin-top:12px}
+  .dot{width:10px;height:10px;border-radius:50%;background:var(--ok);animation:p 1.2s infinite}
+  @keyframes p{50%{opacity:.25}}
+  .ok{text-align:center}
+  .ok .ic{font-size:52px}
+  .rod{text-align:center;color:var(--mut);font-size:13px;margin-top:18px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo"><img src="logo.png" alt="RICO Streaming+"><small>Renovação de assinatura</small></div>
+
+  <!-- 1. Usuário -->
+  <div class="card" id="passo1">
+    <h2>Renove seu acesso</h2>
+    <label for="usuario">Seu usuário</label>
+    <input id="usuario" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="ex.: joaosilva">
+    <button id="btnConsultar">Continuar</button>
+    <div class="msg" id="msg1"></div>
+  </div>
+
+  <!-- 2. Confirmação -->
+  <div class="card hide" id="passo2">
+    <h2>Confira sua renovação</h2>
+    <div class="linha"><span>Usuário</span><b id="cUsuario"></b></div>
+    <div class="linha" id="lVenc"><span>Vence em</span><b id="cVenc"></b></div>
+    <div class="linha" id="lTelasFixo"><span>Telas</span><b id="cTelas"></b></div>
+    <div id="lTelasEsc" class="hide" style="padding-top:10px">
+      <label for="telas">Quantas telas?</label>
+      <select id="telas"><option value="1">1 tela</option><option value="2">2 telas</option><option value="3">3 telas</option></select>
+    </div>
+    <div class="linha"><span>Plano</span><b>1 mês</b></div>
+    <div class="linha" style="border:0"><span>Total</span><b class="total" id="cTotal"></b></div>
+    <button id="btnPix">Gerar PIX</button>
+    <button class="sec" id="btnVoltar">Voltar</button>
+    <div class="msg" id="msg2"></div>
+  </div>
+
+  <!-- 3. PIX -->
+  <div class="card hide" id="passo3">
+    <h2>Pague com PIX</h2>
+    <img class="qr" id="qr" alt="QR Code PIX">
+    <label for="copia">PIX copia e cola</label>
+    <textarea id="copia" readonly></textarea>
+    <button id="btnCopiar">Copiar código PIX</button>
+    <div class="espera"><div class="dot"></div><span>Aguardando o pagamento… A tela atualiza sozinha.</span></div>
+    <div class="msg" id="msg3"></div>
+  </div>
+
+  <!-- 4. Resultado -->
+  <div class="card hide ok" id="passo4">
+    <div class="ic" id="rIc">✅</div>
+    <h2 id="rTit"></h2>
+    <p id="rTxt" style="color:var(--mut)"></p>
+    <button class="sec" onclick="location.reload()">Fazer outra renovação</button>
+  </div>
+
+  <div class="rod">Dúvidas? WhatsApp (27) 99856-8572</div>
+</div>
+
+<script>
+// >>> Troque pelo endereço do seu projeto Supabase do RICO <<<
+const API = "https://xecsbhnijuxvgcfawujp.supabase.co/functions/v1/rico-pagamento";
+
+const $ = (id) => document.getElementById(id);
+const brl = (v) => Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const data = (s) => s ? new Date(s).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—";
+const mostrar = (n) => ["passo1", "passo2", "passo3", "passo4"].forEach((p, i) => $(p).classList.toggle("hide", i !== n - 1));
+let info = null, pagId = null, timer = null;
+
+async function chamar(corpo) {
+  const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.erro || "Não foi possível concluir agora. Tente de novo.");
+  return j;
+}
+
+function atualizarTotal() {
+  if (info.modo !== "manual") { $("cTotal").textContent = brl(info.valor); return; }
+  $("cTotal").textContent = brl(info.valor_fixo ?? info.valor_tela * Number($("telas").value));
+}
+
+$("btnConsultar").onclick = async () => {
+  const usuario = $("usuario").value.trim();
+  $("msg1").textContent = "";
+  if (!usuario) { $("msg1").textContent = "Digite seu usuário."; return; }
+  $("btnConsultar").disabled = true;
+  try {
+    info = await chamar({ acao: "consultar", usuario });
+    $("cUsuario").textContent = info.usuario;
+    const manual = info.modo === "manual";
+    $("lVenc").classList.toggle("hide", manual);
+    $("lTelasFixo").classList.toggle("hide", manual);
+    $("lTelasEsc").classList.toggle("hide", !manual || info.valor_fixo != null);
+    if (!manual) { $("cVenc").textContent = data(info.vencimento); $("cTelas").textContent = info.telas; }
+    atualizarTotal();
+    mostrar(2);
+  } catch (e) { $("msg1").textContent = e.message; }
+  $("btnConsultar").disabled = false;
+};
+$("usuario").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btnConsultar").click(); });
+$("telas").onchange = atualizarTotal;
+$("btnVoltar").onclick = () => mostrar(1);
+
+$("btnPix").onclick = async () => {
+  $("msg2").textContent = "";
+  $("btnPix").disabled = true;
+  try {
+    const r = await chamar({ acao: "pix", usuario: info.usuario, telas: Number($("telas").value) });
+    pagId = r.id;
+    $("qr").src = "data:image/png;base64," + r.qr_base64;
+    $("copia").value = r.copia_cola;
+    mostrar(3);
+    timer = setInterval(conferir, 4000);
+  } catch (e) { $("msg2").textContent = e.message; }
+  $("btnPix").disabled = false;
+};
+
+$("btnCopiar").onclick = async () => {
+  try { await navigator.clipboard.writeText($("copia").value); }
+  catch { $("copia").select(); document.execCommand("copy"); }
+  $("btnCopiar").textContent = "Copiado! ✔";
+  setTimeout(() => $("btnCopiar").textContent = "Copiar código PIX", 2000);
+};
+
+async function conferir() {
+  try {
+    const r = await chamar({ acao: "status", id: pagId });
+    if (r.status === "aguardando" || r.status === "processando") return;
+    clearInterval(timer);
+    const fim = {
+      renovado: ["✅", "Renovação concluída!", "Seu acesso já está liberado até " + data(r.novo_vencimento) + ". Bom proveito!"],
+      pago_manual: ["✅", "Pagamento confirmado!", "Sua renovação será liberada em instantes. Se precisar, chame no WhatsApp."],
+      erro: ["⚠️", "Pagamento recebido", "Recebemos seu PIX, mas a renovação precisa de uma conferência. Chame no WhatsApp que resolvemos rapidinho."],
+      expirado: ["⏰", "PIX expirado", "O código venceu antes do pagamento. Faça uma nova renovação."],
+    }[r.status];
+    if (!fim) return;
+    [$("rIc").textContent, $("rTit").textContent, $("rTxt").textContent] = fim;
+    mostrar(4);
+  } catch { /* tenta de novo no próximo ciclo */ }
+}
+</script>
+</body>
+</html>
