@@ -35,6 +35,9 @@
   .ok .ic{font-size:52px}
   .rod{text-align:center;color:var(--mut);font-size:13px;margin-top:18px}
   .hide{display:none}
+  .linha s{color:var(--mut)}
+  .verde{color:var(--ok)}
+  .promo{margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(245,179,1,.12);border:1px solid rgba(245,179,1,.45);color:var(--acc);font-weight:600;font-size:14px;text-align:center}
 </style>
 </head>
 <body>
@@ -60,7 +63,19 @@
       <label for="telas">Quantas telas?</label>
       <select id="telas"><option value="1">1 tela</option><option value="2">2 telas</option><option value="3">3 telas</option></select>
     </div>
-    <div class="linha"><span>Plano</span><b>1 mês</b></div>
+    <div style="padding-top:10px">
+      <label for="meses">Quantos meses?</label>
+      <select id="meses">
+        <option value="1">1 mês</option>
+        <option value="2">2 meses</option>
+        <option value="3">3 meses · 15% OFF</option>
+        <option value="5">5 meses · leve 6 com 11% OFF</option>
+      </select>
+    </div>
+    <div class="promo hide" id="promo"></div>
+    <div class="linha hide" id="lBruto"><span>Valor sem desconto</span><s id="cBruto"></s></div>
+    <div class="linha hide" id="lDesc"><span id="tDesc">Desconto</span><b class="verde" id="cDesc"></b></div>
+    <div class="linha"><span>Renova</span><b id="cRenova"></b></div>
     <div class="linha" style="border:0"><span>Total</span><b class="total" id="cTotal"></b></div>
     <button id="btnPix">Gerar PIX</button>
     <button class="sec" id="btnVoltar">Voltar</button>
@@ -106,9 +121,29 @@ async function chamar(corpo) {
   return j;
 }
 
+const PLANOS = { 1: [0, 1], 2: [0, 2], 3: [0.15, 3], 5: [0.11, 6] }; // meses: [desconto, meses renovados]
+const cent = (v) => Math.round(v * 100) / 100;
+function valorMensal() {
+  if (info.modo !== "manual") return info.valor;
+  return info.valor_fixo ?? info.valor_tela * Number($("telas").value);
+}
 function atualizarTotal() {
-  if (info.modo !== "manual") { $("cTotal").textContent = brl(info.valor); return; }
-  $("cTotal").textContent = brl(info.valor_fixo ?? info.valor_tela * Number($("telas").value));
+  const meses = Number($("meses").value);
+  const [desc, renova] = PLANOS[meses];
+  const bruto = cent(valorMensal() * meses);
+  const total = cent(bruto * (1 - desc));
+  const temDesc = desc > 0;
+  $("lBruto").classList.toggle("hide", !temDesc);
+  $("lDesc").classList.toggle("hide", !temDesc);
+  $("cBruto").textContent = brl(bruto);
+  $("tDesc").textContent = "Desconto (" + Math.round(desc * 100) + "%)";
+  $("cDesc").textContent = "− " + brl(cent(bruto - total));
+  $("cRenova").textContent = renova + (renova > 1 ? " meses" : " mês");
+  $("cTotal").textContent = brl(total);
+  const promo = meses === 5 ? "🎁 Pague 5, leve 6: você ganha 1 mês grátis + 11% de desconto!"
+    : meses === 3 ? "🔥 3 meses com 15% de desconto!" : "";
+  $("promo").textContent = promo;
+  $("promo").classList.toggle("hide", !promo);
 }
 
 $("btnConsultar").onclick = async () => {
@@ -124,6 +159,7 @@ $("btnConsultar").onclick = async () => {
     $("lTelasFixo").classList.toggle("hide", manual);
     $("lTelasEsc").classList.toggle("hide", !manual || info.valor_fixo != null);
     if (!manual) { $("cVenc").textContent = data(info.vencimento); $("cTelas").textContent = info.telas; }
+    $("meses").value = "1";
     atualizarTotal();
     mostrar(2);
   } catch (e) { $("msg1").textContent = e.message; }
@@ -131,13 +167,14 @@ $("btnConsultar").onclick = async () => {
 };
 $("usuario").addEventListener("keydown", (e) => { if (e.key === "Enter") $("btnConsultar").click(); });
 $("telas").onchange = atualizarTotal;
+$("meses").onchange = atualizarTotal;
 $("btnVoltar").onclick = () => mostrar(1);
 
 $("btnPix").onclick = async () => {
   $("msg2").textContent = "";
   $("btnPix").disabled = true;
   try {
-    const r = await chamar({ acao: "pix", usuario: info.usuario, telas: Number($("telas").value) });
+    const r = await chamar({ acao: "pix", usuario: info.usuario, telas: Number($("telas").value), meses: Number($("meses").value) });
     pagId = r.id;
     $("qr").src = "data:image/png;base64," + r.qr_base64;
     $("copia").value = r.copia_cola;
